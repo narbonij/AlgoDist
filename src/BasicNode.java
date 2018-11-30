@@ -22,6 +22,8 @@ public class BasicNode extends Node {
 		father = null;
 		children = new HashSet<BasicNode>() ;
 		
+		setColor(Color.getRandomColor());
+		
 		//On cherche le sommet le plus proche
 		Distance closestDist = findClosestDistOutsideOfFragment();
 		
@@ -41,6 +43,8 @@ public class BasicNode extends Node {
 	@Override
 	public void onClock() {
 		updateLabel();
+		if(father != null)
+			setColor(father.getColor());
 	}
 	
 	@Override
