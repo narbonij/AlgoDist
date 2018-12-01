@@ -38,6 +38,7 @@ public class BasicNode extends Node {
 			if(getNodeFromDist(closestDist) != null)
 				father = getNodeFromDist(closestDist);
 		}
+		updateLabel();
 	}
 	
 	@Override
@@ -49,8 +50,13 @@ public class BasicNode extends Node {
 	
 	@Override
 	public void onMessage(Message m) {
+		updateLabel();
 		switch ((String)m.getContent()) {
 		case "IAMDAD":
+			if(father != null && father != m.getSender()) {
+				send(father, new Message("IAMDAD"));
+				children.add(father);				
+			}
 			father = (BasicNode) m.getSender();
 			break;
 			
