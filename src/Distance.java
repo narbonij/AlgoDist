@@ -1,3 +1,4 @@
+import jbotsim.Link;
 
 public class Distance implements Comparable {
 	private double distance; //distance euclidienne au sommet
@@ -44,6 +45,61 @@ public class Distance implements Comparable {
 		}
 		return 0;
 
+	}
+	
+	//comparison function for Link => total order on link 
+	public static boolean smaller(Link l1, Link l2)
+	{
+		if(l1.getLength()<l2.getLength())
+		{
+			return true;
+		}
+		else if(l1.getLength() > l2.getLength())
+		{
+			return false;
+		}
+		else //if length are equal: checking ids of the links
+		{
+			int minL1,minL2,maxL1,maxL2;
+			minL1 = l1.endpoint(0).getID();
+			maxL1 = l1.endpoint(1).getID();
+			if(maxL1 < minL1)
+			{
+				int aux = minL1;
+				minL1 = maxL1;
+				maxL1 = aux;
+			}
+			
+			minL2 = l2.endpoint(0).getID();
+			maxL2 = l2.endpoint(1).getID();
+			
+			if(maxL2 < minL2)
+			{
+				int aux = minL2;
+				minL2 = maxL2;
+				maxL2 = aux;
+			}
+			
+			if(minL1 < minL2)
+			{
+				return true;
+			}
+			else if(minL1 > minL2)
+			{
+				return false;
+			}
+			else
+			{
+				if(maxL1 < maxL2)
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
 	}
 	
 	
