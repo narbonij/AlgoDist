@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -26,9 +27,10 @@ public class BasicNode extends Node
 	private Node outNode;
 	private int counterAckFrag;
 	private int counterOut;
-	private int counterAckMerge;
+	//private int counterAckMerge;
+	private Map<Integer,Integer> mapCounterAckMerge;
 	private int counterEcho;
-	private Set<Message> listMerge;
+	private Set<Pair<Node,Integer>> listMerge;
 	private Map<Pair<Integer,Integer>,Node> listAckFrag;
 	
 	public BasicNode()
@@ -37,6 +39,7 @@ public class BasicNode extends Node
 		children = new HashSet<>();
 		listMerge = new HashSet<>();
 		listAckFrag = new ConcurrentHashMap<>();
+		mapCounterAckMerge = new ConcurrentHashMap<>();
 
 		
 		// TODO Auto-generated constructor stub
@@ -53,8 +56,11 @@ public class BasicNode extends Node
 		reset();
 		counterAckFrag = 0;
 		counterOut = 0;
-		counterAckMerge = 0;
+		//counterAckMerge = 0;
 		counterEcho = 0;
+		listAckFrag.clear();
+		listMerge.clear();
+		mapCounterAckMerge.clear();
 
 	}
 	
@@ -64,12 +70,17 @@ public class BasicNode extends Node
 		hasMerged = false;
 		out = null;
 		outNode = null;
+		if(!mapCounterAckMerge.containsKey(phase))
+		{
+			mapCounterAckMerge.put(phase, 0);
+		}
 		updateLabel();
 	}
 	
 	private void start()
 	{
 		setPhase(phase+1);
+		reset();
 		for(Node n : getNeighbors())
 		{
 			send(n,new Message(phase,"FRAG"));
@@ -100,190 +111,206 @@ public class BasicNode extends Node
 	public void onClock()
 	{
 		// TODO Auto-generated method stub
-		super.onClock();
-		//sendAckFrag();
-	}
-
-	@Override
-	public void onMessage(Message mess)
-	{
-		Log("NODE:" + this + " with " + children.size() + " children RECEIVE: " + mess.getFlag() + " from: " + mess.getSender());
-		switch(mess.getFlag())
+		//super.onClock();
+		//
+		List<Message> listmess = getMailbox();
+		for(Message mess : listmess)
 		{
-		case "PULSE": //signal of new phase from father
-			setPhase(phase+1);
-			sendAckFrag();
-			reset();
-			for(Node n : children)//forward it to your children
+			Log("NODE:" + this + " with " + children.size() + " children RECEIVE: " + mess.getFlag() + " from: " + mess.getSender());
+			switch(mess.getFlag())
 			{
-				send(n,new Message(null,"PULSE"));
-			}
-			for(Node n : getNeighbors())//and check your neighbor for OUT edge
-			{
-				send(n, new Message(phase, "FRAG"));
-			}
-			
-		break;
-		
-		case "FRAG": //ask from frag number
-			if(phase == (Integer)mess.getContent())
-			{
-				send(mess.getSender(),new Message(frag,"ACK_FRAG")); //answer it
-			}
-			else
-			{
-				listAckFrag.put(new Pair<Integer,Integer>(mess.getSender().getID(),(Integer) mess.getContent()),mess.getSender());
-			}
-			
-		
-			
-			break;
-			
-		case "ACK_FRAG": //getting frag number of neighbor
-			counterAckFrag++;
-			Log(counterAckFrag + " on " + getNeighbors().size());
-			//if frag number different of this.frag then check OUT for distance
-			if((Integer)mess.getContent() != frag)
-			{
-				Link outgoingEdge = getCommonLinkWith(mess.getSender());
-				if(isSmaller(outgoingEdge,out))
+			case "PULSE": //signal of new phase from father
+				setPhase(phase+1);
+				//sendAckFrag();
+				reset();
+				for(Node n : children)//forward it to your children
 				{
-					out = outgoingEdge;
-					outNode = null;
+					send(n,new Message(null,"PULSE"));
 				}
-			}
-			checkAckFragOutMessage();
-			break;
-			
-		case "OUT":
-			counterOut++;
-			Log(counterOut+ " on " + children.size());
-			if(mess.getContent() != null)
-			{
-				Link outgoingEdge = (Link)mess.getContent();
-				if(isSmaller(outgoingEdge, out))
+				for(Node n : getNeighbors())//and check your neighbor for OUT edge
 				{
-					out = outgoingEdge;
-					outNode = (Node) mess.getSender();
+					send(n, new Message(phase, "FRAG"));
 				}
 				
-			}
-			checkAckFragOutMessage();
 			break;
 			
-			
-		case "ACK_NEW_ROOT":
-			readyToMerge = true;
-			for(Node n : children)
-			{
-				send(n,new Message(mess.getContent(), "ACK_NEW_ROOT"));
-			}
-			if(out != null && out.equals((Link)mess.getContent())) //if you have the same OUT, you are on the path 
-				//of vertices that have to change their father or send MERGE
-			{
-				children.add(mess.getSender());
-				checkAckNewRoot();
-			}
-			checkForMerge();
-			break;
-			
-			
-		case "MERGE"://root of another fragment ask for merge
-			if(hasMerged)
-			{
-				children.add(mess.getSender());
-				send(mess.getSender(),new Message(frag,"NEW"));
-			}
-			else
-			{
-				if(readyToMerge)
+			case "FRAG": //ask from frag number
+				if(phase >= (Integer)mess.getContent())
 				{
-					
-					if(father == null)//if you are also the root of your fragment
+					send(mess.getSender(),new Message(frag,"ACK_FRAG")); //answer it
+				}
+				else
+				{
+					listAckFrag.put(new Pair<Integer,Integer>(mess.getSender().getID(),(Integer) mess.getContent()),mess.getSender());
+				}
+				
+			
+				
+				break;
+				
+			case "ACK_FRAG": //getting frag number of neighbor
+				counterAckFrag++;
+				Log(counterAckFrag + " on " + getNeighbors().size());
+				//if frag number different of this.frag then check OUT for distance
+				if((Integer)mess.getContent() != frag)
+				{
+					Link outgoingEdge = getCommonLinkWith(mess.getSender());
+					if(isSmaller(outgoingEdge,out))
 					{
-						if(getCommonLinkWith(mess.getSender()) == out) //you are the new root
+						out = outgoingEdge;
+						outNode = null;
+					}
+				}
+				//checkAckFragOutMessage();
+				break;
+				
+			case "OUT":
+				counterOut++;
+				Log(counterOut+ " on " + children.size());
+				if(mess.getContent() != null)
+				{
+					Link outgoingEdge = (Link)mess.getContent();
+					if(isSmaller(outgoingEdge, out))
+					{
+						out = outgoingEdge;
+						outNode = (Node) mess.getSender();
+					}
+					
+				}
+				//checkAckFragOutMessage();
+				break;
+				
+				
+			case "ACK_NEW_ROOT":
+				readyToMerge = true;
+				for(Node n : children)
+				{
+					send(n,new Message(mess.getContent(), "ACK_NEW_ROOT"));
+				}
+				if(out != null && out.equals((Link)mess.getContent())) //if you have the same OUT, you are on the path 
+					//of vertices that have to change their father or send MERGE
+				{
+					children.add(mess.getSender());
+					checkAckNewRoot();
+				}
+				checkForMerge();
+				break;
+				
+				
+			case "MERGE"://root of another fragment ask for merge
+				if(hasMerged)
+				{
+					children.add(mess.getSender());
+					send(mess.getSender(),new Message(frag,"NEW"));
+				}
+				else
+				{
+					if(readyToMerge)
+					{
+						
+						if(father == null)//if you are also the root of your fragment
 						{
-							children.add(mess.getSender());//adding the other node to children
-							if((Integer)mess.getContent() > frag)
+							if(getCommonLinkWith(mess.getSender()) == out) //you are the new root
 							{
-								
-								//and also adding pending merge
-								for(Message m : listMerge)
+								children.add(mess.getSender());//adding the other node to children
+								if((Integer)mess.getContent() > frag)
 								{
-									children.add(m.getSender());
+									
+									//and also adding pending merge
+									for(Pair<Node,Integer> p : listMerge)
+									{
+										children.add(p.first());
+									}
+									listMerge.clear();
+									for(Node n : children)//and sending children NEW
+									{
+										send(n, new Message(frag,"NEW"));
+									}
+									hasMerged = true;
+									Log("---------MERGING FRAG: " + frag + " AND " + (Integer)mess.getContent() + "-----------");
+									for(Node n : getNeighbors()) //acking neighbors that you have merged
+									{
+										send(n,new Message(phase,"ACK_MERGE"));
+									}
 								}
-								listMerge.clear();
-								for(Node n : children)//and sending children NEW
-								{
-									send(n, new Message(frag,"NEW"));
-								}
-								hasMerged = true;
-								Log("---------MERGING FRAG: " + frag + " AND " + (Integer)mess.getContent() + "-----------");
-								for(Node n : getNeighbors()) //acking neighbors that you have merged
-								{
-									send(n,new Message(null,"ACK_MERGE"));
-								}
+							}
+							else
+							{
+								children.add(mess.getSender());//adding the other node to children
 							}
 						}
 						else
 						{
 							children.add(mess.getSender());//adding the other node to children
 						}
+						
 					}
 					else
 					{
-						children.add(mess.getSender());//adding the other node to children
+						listMerge.add(new Pair<Node,Integer>(mess.getSender(),(Integer)mess.getContent()));
 					}
-					
 				}
+			break;
+			
+			
+			case "NEW":
+				//the OUT is now validated: color it blue
+				getCommonLinkWith(mess.getSender()).setColor(Color.BLUE);
+				
+				
+				
+				setFather(mess.getSender());
+				children.remove(father);
+				setFrag((Integer)mess.getContent());
+				for(Node n : children)//forwarding it to children
+				{
+					send(n, new Message(frag,"NEW"));
+				}
+				hasMerged = true;
+				for(Node n : getNeighbors())//acking neighbors you have merged
+				{
+					send(n,new Message(phase,"ACK_MERGE"));
+				}
+				break;
+				
+			case "ACK_MERGE":
+				//counterAckMerge++;
+				if(!mapCounterAckMerge.containsKey((Integer)mess.getContent()))
+				{
+					mapCounterAckMerge.put((Integer)mess.getContent(), 1);
+				}
+					
 				else
 				{
-					listMerge.add(mess);
+					mapCounterAckMerge.put((Integer)mess.getContent(), mapCounterAckMerge.get((Integer)mess.getContent())+1);
 				}
+					
+				Log(mapCounterAckMerge.get((Integer)mess.getContent()) + " on " + getNeighbors().size() + " for phase:" + (Integer)mess.getContent());
+				break;
+				
+			case "ECHO":
+				counterEcho++;
+				Log(counterEcho + " on " + children.size());
+				break;
+				
+			case "STOP":
+				for(Node n : children)
+				{
+					send(n,new Message(null,"STOP"));
+				}
+				return;
+			
 			}
-		break;
-		
-		
-		case "NEW":
-			//the OUT is now validated: color it blue
-			getCommonLinkWith(mess.getSender()).setColor(Color.BLUE);
-			
-			
-			
-			setFather(mess.getSender());
-			children.remove(father);
-			setFrag((Integer)mess.getContent());
-			for(Node n : children)//forwarding it to children
-			{
-				send(n, new Message(frag,"NEW"));
-			}
-			hasMerged = true;
-			for(Node n : getNeighbors())//acking neighbors you have merged
-			{
-				send(n,new Message(null,"ACK_MERGE"));
-			}
-			break;
-			
-		case "ACK_MERGE":
-			counterAckMerge++;
-			Log(counterAckMerge + " on " + getNeighbors().size());
-			checkAckMergeEchoMessage();
-			break;
-			
-		case "ECHO":
-			counterEcho++;
-			Log(counterEcho + " on " + children.size());
-			checkAckMergeEchoMessage();
-			break;
-			
-		case "STOP":
-			for(Node n : children)
-			{
-				send(n,new Message(null,"STOP"));
-			}
-			return;
-		
 		}
+		sendAckFrag();
+		checkAckFragOutMessage();
+		checkAckMergeEchoMessage();
+	}
+
+	@Override
+	public void onMessage(Message mess)
+	{
+		
 		
 		
 		//super.onMessage(arg0);
@@ -346,14 +373,17 @@ public class BasicNode extends Node
 	
 	private void checkAckMergeEchoMessage()
 	{
-		if(hasMerged && counterAckMerge == getNeighbors().size() && counterEcho == children.size())
+		if(mapCounterAckMerge.get(phase) > getNeighbors().size() || counterEcho > children.size())
+			System.out.println("!!!!!!!!!!!!!!!!!!!!PROBLEM!!!!!!!!!!!!!!!!!!!");
+		if(hasMerged && mapCounterAckMerge.get(phase) == getNeighbors().size() && counterEcho == children.size())
 		{
-			counterAckMerge -= getNeighbors().size();
+			//counterAckMerge -=  getNeighbors().size();
+			mapCounterAckMerge.put(phase, 0);
 			counterEcho = 0;
 			if(father == null)//you are the root of your fragment: signal for new phase
 			{
 				setPhase(phase+1);
-				sendAckFrag();
+				//sendAckFrag();
 				reset();
 				for(Node n : children)
 				{
@@ -394,12 +424,12 @@ public class BasicNode extends Node
 			if(father == null) //you are the root of your fragment
 			{
 				boolean root = false;
-				for(Message m : listMerge)
+				for(Pair<Node,Integer> p : listMerge)
 				{
-					if(out.equals(getCommonLinkWith(m.getSender())))
+					if(out.equals(getCommonLinkWith(p.first())))
 					{
-						children.add(m.getSender());
-						if(frag < (Integer)m.getContent())
+						children.add(p.first());
+						if(frag < p.second())
 						{
 							root = true; //you are designated the new root
 							
@@ -408,7 +438,7 @@ public class BasicNode extends Node
 					}
 					else
 					{
-						children.add(m.getSender());
+						children.add(p.first());
 					}
 					
 					
@@ -423,15 +453,15 @@ public class BasicNode extends Node
 					hasMerged = true;
 					for(Node n : getNeighbors())
 					{
-						send(n,new Message(null,"ACK_MERGE"));
+						send(n,new Message(phase,"ACK_MERGE"));
 					}
 				}
 			}
 			else
 			{
-				for(Message m : listMerge)
+				for(Pair<Node,Integer> p: listMerge)
 				{
-					children.add(m.getSender());
+					children.add(p.first());
 				}
 				
 			}
@@ -446,7 +476,7 @@ public class BasicNode extends Node
 		{
 			for(Pair<Integer,Integer> p : listAckFrag.keySet())
 			{
-				if( phase == p.second())
+				if( phase >= p.second())
 				{
 					
 					send(listAckFrag.get(p),new Message(frag,"ACK_FRAG"));
@@ -460,14 +490,14 @@ public class BasicNode extends Node
 
 	private void Log(String s)
 	{
-		if( true || Main.listNodeLog.contains(getID()))
+		/*if( true || Main.listNodeLog.contains(getID()))
 		{
 			//Log(s,true);
-		}
+		}*/
 		
 	}
 
-	private void Log(String s, boolean append)
+	public static void Log(String s, boolean append)
 	{
 		Logger logger = Logger.getLogger("log");  
 		logger.setUseParentHandlers(false);
