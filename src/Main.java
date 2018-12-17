@@ -27,6 +27,7 @@ public class Main{
         JViewer viewer = null;
     	
     	property[0] = new GHSProperty(args);
+    	System.out.println("HAHA");
     	if(property[0]._graphFilename != null)
     	{
     		hasFinished[0] = false;
