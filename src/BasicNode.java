@@ -342,7 +342,8 @@ public class BasicNode extends Node
 					{
 						send(n,new Message(null,"STOP"));
 					}
-					System.out.println("Algo terminated in " + phase + " phases");
+					if(Main.property[0]._verboseMode)
+						System.out.println("GHS algorithm terminated in " + phase + " phases");
 					return;
 				}
 				else //a new OUT has been found for this fragment

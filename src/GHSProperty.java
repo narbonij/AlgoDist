@@ -9,6 +9,8 @@ public class GHSProperty
 	public int _verboseStep;
 	public int _clockSpeed;
 	public boolean _shuffleIds;
+	public boolean _display;
+	public String _perfFilename;
 
 	public GHSProperty(String[] args)
 	{
@@ -20,6 +22,8 @@ public class GHSProperty
 		_verboseStep = 1;
 		_clockSpeed = 50;
 		_shuffleIds = false;
+		_display = false;
+		_perfFilename = null;
 		for(int i = 0;i<args.length;i++)
 		{
 			String arg = args[i];
@@ -36,6 +40,10 @@ public class GHSProperty
 					{
 						i++;
 						_resultFilename = args[i];
+					}
+					else
+					{
+						System.out.println("Invalid filename for result.");
 					}
 					break;
 				case "-v":
@@ -73,6 +81,22 @@ public class GHSProperty
 					
 				case "-si":
 					_shuffleIds = true;
+					break;
+					
+				case "-d":
+					_display = true;
+					break;
+					
+				case "-p":
+					if( i+1< args.length && !args[i+1].startsWith("-"))
+					{
+						i++;
+						_perfFilename = args[i];
+					}
+					else
+					{
+						System.out.println("Invalid filename for performances.");
+					}
 					break;
 
 				default:
