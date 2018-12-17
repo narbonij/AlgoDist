@@ -79,6 +79,7 @@ public class BasicNode extends Node
 	
 	private void start()
 	{
+ 
 		setPhase(phase+1);
 		reset();
 		for(Node n : getNeighbors())
@@ -110,9 +111,6 @@ public class BasicNode extends Node
 	@Override
 	public void onClock()
 	{
-		// TODO Auto-generated method stub
-		//super.onClock();
-		//
 		List<Message> listmess = getMailbox();
 		for(Message mess : listmess)
 		{

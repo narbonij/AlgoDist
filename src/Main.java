@@ -27,9 +27,10 @@ public class Main{
         JViewer viewer = null;
     	
     	property[0] = new GHSProperty(args);
-    	System.out.println("HAHA");
+
     	if(property[0]._graphFilename != null)
     	{
+    		
     		hasFinished[0] = false;
     		final Integer[] nbMessTotal = new Integer[1];
     		final Integer[] nbTickTotal = new Integer[1];
@@ -135,7 +136,7 @@ public class Main{
 						            e.printStackTrace();
 						        }
 							}
-							if(!property[0]._display)
+							//if(!property[0]._display)
 								System.exit(0);
 							
 							
@@ -148,9 +149,8 @@ public class Main{
 				}
 			});
 	        
-	        
-	        tp.start();
-	      
+	       
+	        tp.start();      
 	        
     	}
     	
