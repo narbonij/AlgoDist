@@ -98,7 +98,7 @@ public class BasicNode extends Node
 		super.onStart();
 		init();
 		start();
-		if(getID() == 0)
+		if(Main.property[0]._log && getID() == 0)
 		{
 			Log("----------------START ALGORITHM----------------",false);
 		}
@@ -177,7 +177,6 @@ public class BasicNode extends Node
 					}
 					
 				}
-				//checkAckFragOutMessage();
 				break;
 				
 				
@@ -490,10 +489,10 @@ public class BasicNode extends Node
 
 	private void Log(String s)
 	{
-		/*if( true || Main.listNodeLog.contains(getID()))
+		if(Main.property[0]._log)
 		{
-			//Log(s,true);
-		}*/
+			Log(s,true);
+		}
 		
 	}
 

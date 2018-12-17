@@ -4,18 +4,19 @@
     <!--ANT 1.7 is required                                        -->
     <!--define folder properties-->
     <property name="dir.buildfile" value="."/>
-    <property name="dir.workspace" value="C:/Users/Jonathan/eclipse-workspace"/>
-    <property name="dir.jarfile" value="${dir.buildfile}"/>
+    <property name="dir.workspace" value="${dir.buildfile}"/>
+    <property name="dir.jarfile" value="${dir.workspace}"/>
     <target depends="build" name="create_run_jar">
-        <jar destfile="${dir.jarfile}/GHS.jar" filesetmanifest="mergewithoutmain">
+        <jar destfile="${dir.workspace}/GHS.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="Main"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-            <fileset dir="${dir.jarfile}/bin"/>
-            <zipfileset excludes="META-INF/*.SF" src="${dir.jarfile}/jbotsim-1.0-beta02-dot.jar"/>
+            <fileset dir="${dir.buildfile}/bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/jbotsim-1.0-beta02-dot.jar"/>
         </jar>
     </target>
+	
 	
 	<property environment="env"/>
     <property name="debuglevel" value="source,lines,vars"/>
