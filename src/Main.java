@@ -53,6 +53,7 @@ public class Main{
 						nbStopedNode[0]++;
 						if(nbStopedNode[0] == (tp.getNodes().size()-1))
 						{
+							System.out.println("With " + nbMessTotal[0] + " messages sent.");
 							tp.pause();
 							
 							for(Link l : tp.getLinks())
@@ -77,8 +78,6 @@ public class Main{
 									}
 									result +=";\n";
 								}
-								System.out.println("With " + nbMessTotal[0] + " messages sent.");
-								tp.pause();
 								for(Node n : tp.getNodes())
 								{
 									result += n.getID() + " [pos=\"" + n.getX() + "," + n.getY() + "\"];\n";
