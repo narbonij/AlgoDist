@@ -8,6 +8,7 @@ public class GHSProperty
 	public boolean _verboseMode;
 	public int _verboseStep;
 	public int _clockSpeed;
+	public boolean _shuffleIds;
 
 	public GHSProperty(String[] args)
 	{
@@ -18,6 +19,7 @@ public class GHSProperty
 		_verboseMode = false;
 		_verboseStep = 1;
 		_clockSpeed = 50;
+		_shuffleIds = false;
 		for(int i = 0;i<args.length;i++)
 		{
 			String arg = args[i];
@@ -67,6 +69,10 @@ public class GHSProperty
 							
 						}
 					}
+					break;
+					
+				case "-si":
+					_shuffleIds = true;
 					break;
 
 				default:

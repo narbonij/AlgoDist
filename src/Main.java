@@ -34,6 +34,8 @@ public class Main{
 			tp.disableWireless();
 			tp.setDefaultNodeModel(BasicNode.class);
 	        Format.importFromFile(tp, property[0]._graphFilename);
+	        if(property[0]._shuffleIds)
+	        	tp.shuffleNodeIds();
 	        JViewer viewer = new JViewer(tp);
 	        
 	        
