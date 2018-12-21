@@ -137,7 +137,7 @@ public class Main{
 						        }
 							}
 							//if(!property[0]._display)
-								System.exit(0);
+								//System.exit(0);
 							
 							
 							
@@ -154,18 +154,7 @@ public class Main{
 	        
     	}
     	
-    	
-    	/*while(hasFinished != null && !hasFinished[0])
-	    {
-			try
-			{
-				Thread.
-			} catch (InterruptedException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-	    }*/
+   
     
     	
 
