@@ -2,12 +2,25 @@
 
 
 -to create runnable jar from source: use ant command when located in the same directory as build.xml
--to use GHS: load a topology (right click -> load topology)
-			 start the topology (or remove a node).
-			 
-BEWARE:-adding a node stops the topology
-	   -removing a node resart the algorithm
-	   
+-to use GHS: compile with ant command: ant
+
+run command: java -jar GHS.jar name_of_the_graph.dot [options]
+
+where name_of_the_graph.dot, is the filename of the graph on which you want to compute the MST (the graph must be saved in dot format)
+
+options:
+-log :: log all messages (beware really slows down the computing)
+-v X :: verbose mode write in consola every X messages (useful to see if the algorithm is still running or is blocked)
+-d : display the topology (beware computing without displaying the topology can cause failure)
+-s filename.dot : save the result of the MST in dot format (edges of the MST will be in magenta)
+-p filename.csv : add a line n,m,nbMess,nbTic to filename.csv where n is the number of vertice, m the number of edges, nbMess the number of mesages, and nbTic the number of clock tics
+-cs X :: change the clockspeed to X ms
+-si :: shuffle the ids of the nodes before the computing
+
+example:
+
+java -jar GHS.jar graphs/gabriel_500_68.dot -cs 1 -d -s result.dot
+
 	   
 COLOR CODE:-RED NODE consider themselves as root of their fragment
 		   -RED EDGE are OUT edge (minimum fragment-outgoing edge) selected by a fragment
